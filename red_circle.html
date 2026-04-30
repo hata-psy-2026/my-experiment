@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>jsPsych Red Circle Task</title>
+    <!-- Load jsPsych core and CSS from CDN -->
+    <script src="https://unpkg.com/jspsych@7.3.4"></script>
+    <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
+    <!-- Load html-keyboard-response plugin -->
+    <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
+    <style>
+        /* Specification 1: Background color set to gray (#808080) */
+        body, .jspsych-content-wrapper {
+            background-color: #808080 !important;
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Specification 2: Red circle CSS (100px diameter) */
+        .red-circle {
+            width: 100px;
+            height: 100px;
+            background-color: red;
+            border-radius: 50%; /* Makes the DIV a circle */
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body></body>
+<script>
+    /**
+     * Initialize jsPsych
+     */
+    const jsPsych = initJsPsych();
+
+    /**
+     * Create the timeline
+     */
+    const timeline = [];
+
+    /**
+     * Trial: Display the red circle
+     * Specification 2 & 3: Use html-keyboard-response, stay until space key
+     */
+    const circle_trial = {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: '<div class="red-circle"></div>',
+        choices: [' '], // Specification 3: Space key only
+        prompt: '<p style="margin-top: 20px;">スペースキーを押すと終了します</p>'
+    };
+    timeline.push(circle_trial);
+
+    /**
+     * Final Trial: Completion message
+     * Specification 4: Display end message
+     */
+    const end_message = {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: `
+            <div style="font-size: 24px;">
+                <h1>終了しました</h1>
+                <p>ご協力ありがとうございました。</p>
+            </div>
+        `,
+        choices: "NO_KEYS" // Stays on screen
+    };
+    timeline.push(end_message);
+
+    /**
+     * Start the experiment
+     */
+    jsPsych.run(timeline);
+</script>
+</html>

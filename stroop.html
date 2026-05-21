@@ -4,11 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stroop Task</title>
-    <!-- jsPsych 7.3.4 -->
+    
+    <!-- 【重要】jsPsych本体を必ず一番最初に読み込む -->
     <script src="https://unpkg.com/jspsych@7.3.4"></script>
+    
+    <!-- その後に各種プラグインを読み込む -->
     <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.3"></script>
+    
     <link rel="stylesheet" href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css">
+    
     <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -58,7 +64,6 @@
         .stimulus-text {
             font-size: 60px;
             font-weight: bold;
-            /* 確実に中央に来るようにテキスト配置を指定 */
             text-align: center;
             line-height: 1;
         }
@@ -75,17 +80,91 @@
     <div id="jspsych-target"></div>
 
     <script>
+        // ====== 指定されたGASのウェブアプリURL ======
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbys5lhtKfdcYCS6eQKZDQA6yJeffyXp6VLtFYwVCvq2H-9U5gP2yvUAWzqvlZujEZD6/exec";
+
+        // ====== データをGASへ送信する関数（指数バックオフによる再試行付き） ======
+        async function sendDataWithRetry(csvData, displayElement, retryCount = 0) {
+            const MAX_RETRIES = 3;
+            try {
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: csvData 
+                });
+
+                const result = await response.json();
+                
+                if (result.result === "success") {
+                    displayElement.innerHTML = `
+                        <div class="text-center p-8 bg-gradient-to-br from-yellow-50 to-orange-100 rounded-3xl shadow-lg border border-yellow-200">
+                            <div class="text-6xl mb-4">✨</div>
+                            <h2 class="text-3xl font-bold text-orange-600 mb-4">素晴らしい集中力でした！</h2>
+                            <p class="text-lg text-gray-700 mb-6">最後まで丁寧に取り組んでいただき、本当にありがとうございます！<br>あなたの貴重なデータは、無事に大切に保存されました。</p>
+                            <div class="bg-white/50 px-6 py-3 rounded-full inline-block font-semibold text-orange-500">
+                                今日も一日、お疲れ様でした！ 🌈
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(result.message || "Unknown Error");
+                }
+            } catch (error) {
+                console.error("Data submission error:", error);
+                if (retryCount < MAX_RETRIES) {
+                    const waitTime = Math.pow(2, retryCount) * 1000; // 1秒, 2秒, 4秒...と待機時間を増やす
+                    displayElement.innerHTML = `
+                        <div class="text-center text-yellow-600">
+                            <h2 class="text-xl font-bold mb-4">通信エラーが発生しました。</h2>
+                            <p>データを再送信しています... (${retryCount + 1}/${MAX_RETRIES})</p>
+                        </div>
+                    `;
+                    setTimeout(() => sendDataWithRetry(csvData, displayElement, retryCount + 1), waitTime);
+                } else {
+                    displayElement.innerHTML = `
+                        <div class="text-center text-red-600">
+                            <h2 class="text-2xl font-bold mb-4">データの保存に失敗しました。</h2>
+                            <p>ネットワーク環境を確認してください。</p>
+                            <p class="text-sm text-gray-500 mt-4">エラー詳細: ${error.message}</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+
         const jsPsych = initJsPsych({
             display_element: 'jspsych-target',
-            on_finish: function() {
-                // 実験終了時にCSVデータを画面に表示
-                jsPsych.data.displayData('csv');
+            default_iti: 0, // 予期せぬ真っ白な画面（デフォルトの試行間隔）を無効化
+            on_finish: async function() {
+                // DOM要素消失によるエラーを防ぐため、jsPsychの画面要素を安全に取得
+                const displayElement = jsPsych.getDisplayElement();
+                
+                displayElement.innerHTML = `
+                    <div class="text-center text-gray-800">
+                        <h2 class="text-2xl font-bold mb-4 animate-pulse">データを送信中です...</h2>
+                        <p>画面を閉じずにお待ちください。</p>
+                    </div>
+                `;
+
+                // 'response' タスク（メインのストループ試行）のデータのみを抽出
+                const responseData = jsPsych.data.get().filter({task: 'response'}).values();
+                
+                // CSVのヘッダーを作成（rtとcorrectの順序を入れ替え）
+                let csvString = "subject_id,timestamp,word,color,condition,rt,correct\n";
+                
+                // 各試行のデータをCSV行として追加（こちらもrtとcorrectの順序を入れ替え）
+                responseData.forEach(row => {
+                    csvString += `"${row.subject_id}","${row.timestamp}","${row.word}","${row.color}","${row.condition}","${row.rt}","${row.correct}"\n`;
+                });
+
+                // GASへデータを送信開始
+                sendDataWithRetry(csvString, displayElement);
             }
         });
 
         const timeline = [];
 
-        // (1) 全画面化試行（セキュリティ制限回避のためボタン押しの中で試行）
+        // (1) 全画面化試行（プレビュー環境のiframe権限エラーを回避する安全な実装）
         const enter_fullscreen = {
             type: jsPsychHtmlButtonResponse,
             stimulus: `
@@ -99,12 +178,31 @@
                 const element = document.documentElement;
                 if (element.requestFullscreen) {
                     element.requestFullscreen().catch(err => {
-                        console.warn("Fullscreen blocked: ", err.message);
+                        console.warn("Fullscreen API blocked by permissions policy (Preview iframe): ", err.message);
                     });
                 }
             }
         };
         timeline.push(enter_fullscreen);
+
+        // (1.5) 参加者情報入力画面
+        const participant_info = {
+            type: jsPsychSurveyText,
+            questions: [
+                {prompt: '参加者ID（学籍番号など）を入力してください', name: 'subject_id', required: true}
+            ],
+            button_label: '次へ',
+            on_finish: function(data) {
+                // 参加者IDを取得し、以降の全データ行に自動付与する
+                const subject_id = data.response.subject_id;
+                const timestamp = new Date().toISOString();
+                jsPsych.data.addProperties({
+                    subject_id: subject_id,
+                    timestamp: timestamp
+                });
+            }
+        };
+        timeline.push(participant_info);
 
         // (2) 教示画面
         const instructions = {
@@ -130,8 +228,8 @@
                     <p class="text-center font-bold text-gray-500 animate-pulse">準備ができたら [スペースキー] を押して開始します</p>
                 </div>
             `,
-            choices: [' '],
-            post_trial_gap: 500
+            choices: [' ']
+            // 注意: post_trial_gap は白画面の原因になるため設定しない
         };
         timeline.push(instructions);
 
@@ -148,7 +246,7 @@
             { word: '緑', color: 'blue', condition: 'incongruent', correct_response: 'b' }
         ];
 
-        // a. 注視点
+        // a. 注視点 (500ms)
         const fixation = {
             type: jsPsychHtmlKeyboardResponse,
             stimulus: '<div class="fixation-text">+</div>',
@@ -174,15 +272,21 @@
                 correct_response: jsPsych.timelineVariable('correct_response')
             },
             on_finish: function(data) {
-                // 正誤判定を記録
-                data.correct = jsPsych.pluginAPI.compareKeys(data.response, data.correct_response);
+                // 正解なら "true"、不正解またはタイムアウトなら "false" を文字列として記録
+                if (data.response !== null) {
+                    const isCorrect = jsPsych.pluginAPI.compareKeys(data.response, data.correct_response);
+                    data.correct = isCorrect ? "true" : "false";
+                } else {
+                    data.correct = "false"; 
+                }
             }
         };
 
-        // c. 試行間隔 (ITI)
+        // c. 試行間隔 (ITI: 1000ms)
         const iti = {
             type: jsPsychHtmlKeyboardResponse,
-            stimulus: '',
+            // 要素を完全に空にすると高さが0になり画面がチラつくため、透明な注視点で見えないレイアウトを維持
+            stimulus: '<div class="fixation-text" style="visibility: hidden;">+</div>',
             choices: "NO_KEYS",
             trial_duration: 1000,
             data: { task: 'iti' }
@@ -199,6 +303,7 @@
         };
         timeline.push(stroop_procedure);
 
+        // ウィンドウ読み込み完了時に実験を開始
         window.onload = function() {
             jsPsych.run(timeline);
         };

@@ -10,31 +10,28 @@
     <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.3"></script>
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css">
     <style>
-        body { background-color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; color: #334155; }
-        .jspsych-content { background: white; padding: 3rem; border-radius: 20px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); max-width: 900px; width: 90%; }
-        h2 { color: #1e293b; margin-top: 0; }
-        .center-text { text-align: center; }
-        .results-table { border-collapse: collapse; width: 100%; margin: 20px auto; background: white; }
-        .results-table th { background: #f8fafc; padding: 12px; border: 1px solid #e2e8f0; font-weight: 600; text-align: center; }
-        .results-table td { padding: 10px; border: 1px solid #e2e8f0; text-align: center; }
-        .table-wrapper { max-height: 400px; overflow-y: auto; margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 8px; }
+        body { background-color: #fff5f7; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; font-family: 'Segoe UI', sans-serif; color: #4a5568; }
+        #jspsych-target { background: white; padding: 2.5rem; border-radius: 30px; box-shadow: 0 10px 30px -10px rgba(255,100,150,0.2); max-width: 700px; width: 90%; text-align: center; }
+        .result-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; }
+        .result-table th, .result-table td { border: 1px solid #fed7e2; padding: 10px; }
+        .result-table th { background-color: #fff0f5; }
+        .cute-msg { font-size: 1.4rem; color: #ed64a6; font-weight: bold; margin-bottom: 20px; }
     </style>
 </head>
 <body>
+    <div id="jspsych-target"></div>
     <script>
-        const jsPsych = initJsPsych();
+        const jsPsych = initJsPsych({ display_element: 'jspsych-target' });
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwgKiiUltnSam-tlwTCGppRR53mBqFKZhtVG_iwizD2bp22dcXWjbRjVQxM8twSS3xZyg/exec';
 
         const conditions = [];
-        const angles = [15, 75];
-        const wingLengths = [20, 50];
-        for (let angle of angles) {
-            for (let length of wingLengths) {
-                for (let i = 0; i < 3; i++) {
-                    conditions.push({ angle: angle, wingLength: length });
-                }
+        for (let angle of [15, 75]) {
+            for (let length of [20, 50]) {
+                for (let i = 0; i < 3; i++) conditions.push({ angle: angle, wingLength: length });
             }
         }
         const shuffledConditions = jsPsych.randomization.repeat(conditions, 1);
+        const totalTrials = shuffledConditions.length;
 
         function drawStimuli(c, standardLen, comparisonLen, angle, wingLen) {
             const ctx = c.getContext('2d');
@@ -42,16 +39,13 @@
             ctx.clearRect(0, 0, c.width, c.height);
             ctx.lineWidth = 3; ctx.strokeStyle = '#334155'; ctx.lineCap = 'round';
             const rad = (angle * Math.PI) / 180;
-            const y1 = 150;
+            const y1 = 150, y2 = 250;
             ctx.beginPath();
             ctx.moveTo(300 - standardLen / 2, y1); ctx.lineTo(300 + standardLen / 2, y1);
             ctx.moveTo(300 - standardLen / 2, y1); ctx.lineTo(300 - standardLen / 2 + wingLen * Math.cos(rad), y1 - wingLen * Math.sin(rad));
             ctx.moveTo(300 - standardLen / 2, y1); ctx.lineTo(300 - standardLen / 2 + wingLen * Math.cos(rad), y1 + wingLen * Math.sin(rad));
             ctx.moveTo(300 + standardLen / 2, y1); ctx.lineTo(300 + standardLen / 2 - wingLen * Math.cos(rad), y1 - wingLen * Math.sin(rad));
             ctx.moveTo(300 + standardLen / 2, y1); ctx.lineTo(300 + standardLen / 2 - wingLen * Math.cos(rad), y1 + wingLen * Math.sin(rad));
-            ctx.stroke();
-            const y2 = 250;
-            ctx.beginPath();
             ctx.moveTo(300 - comparisonLen / 2, y2); ctx.lineTo(300 + comparisonLen / 2, y2);
             ctx.moveTo(300 - comparisonLen / 2, y2); ctx.lineTo(300 - comparisonLen / 2 - wingLen * Math.cos(rad), y2 - wingLen * Math.sin(rad));
             ctx.moveTo(300 - comparisonLen / 2, y2); ctx.lineTo(300 - comparisonLen / 2 - wingLen * Math.cos(rad), y2 + wingLen * Math.sin(rad));
@@ -61,37 +55,41 @@
         }
 
         const timeline = [];
-        timeline.push({ type: jsPsychSurveyText, questions: [{prompt: "参加者IDを入力してください", required: true, name: 'subject_id'}] });
-        timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: '<div class="center-text"><h2>ミュラー・リヤー錯視実験</h2><p>上の線と同じ長さに感じるよう、下の線を左右キーで調整してください。<br>準備ができたら何かキーを押してスタート！</p></div>' });
-
-        let trialCount = 0;
-        shuffledConditions.forEach(cond => {
-            trialCount++;
+        timeline.push({ 
+            type: jsPsychSurveyText, 
+            questions: [{
+                prompt: "<h2>ミュラー・リヤー錯視実験</h2><p>上の基準線と同じ長さに感じるよう、下の線を左右キーで調整してください。<br>準備ができたら参加者IDを入力してください。</p>", 
+                required: true, 
+                name: 'subject_id'
+            }] 
+        });
+        
+        shuffledConditions.forEach((cond, index) => {
             timeline.push({
                 type: jsPsychCanvasKeyboardResponse,
                 canvas_size: [400, 600],
                 stimulus: function(c) {
-                    this.compLen = this.compLen || Math.floor(Math.random() * 200) + 100;
+                    this.compLen = this.compLen || 200;
                     drawStimuli(c, 200, this.compLen, cond.angle, cond.wingLength);
                 },
-                prompt: `<div class="center-text" style="color: #64748b;">試行 ${trialCount} / 12</div>`,
+                prompt: `<p>試行: ${index + 1} / ${totalTrials}<br>左右キーで調整し、[スペース]で確定</p>`,
                 choices: [' '],
                 on_load: function() {
                     const plugin = this;
-                    const keysPressed = { arrowleft: false, arrowright: false };
-                    const updateLoop = () => {
-                        let changed = false;
-                        if (keysPressed.arrowleft) { plugin.compLen = Math.max(50, plugin.compLen - 2); changed = true; }
-                        if (keysPressed.arrowright) { plugin.compLen = Math.min(450, plugin.compLen + 2); changed = true; }
-                        if (changed) { const c = document.querySelector('canvas'); if (c) drawStimuli(c, 200, plugin.compLen, cond.angle, cond.wingLength); }
-                        this.animFrame = requestAnimationFrame(updateLoop);
+                    const keys = { arrowleft: false, arrowright: false };
+                    const loop = () => {
+                        if (keys.arrowleft) plugin.compLen = Math.max(50, plugin.compLen - 3);
+                        if (keys.arrowright) plugin.compLen = Math.min(450, plugin.compLen + 3);
+                        const c = document.querySelector('canvas');
+                        if (c) drawStimuli(c, 200, plugin.compLen, cond.angle, cond.wingLength);
+                        plugin.anim = requestAnimationFrame(loop);
                     };
-                    this.animFrame = requestAnimationFrame(updateLoop);
-                    document.addEventListener('keydown', (e) => { if (keysPressed.hasOwnProperty(e.key.toLowerCase())) keysPressed[e.key.toLowerCase()] = true; });
-                    document.addEventListener('keyup', (e) => { if (keysPressed.hasOwnProperty(e.key.toLowerCase())) keysPressed[e.key.toLowerCase()] = false; });
+                    plugin.anim = requestAnimationFrame(loop);
+                    document.addEventListener('keydown', (e) => { if(e.key.toLowerCase() === 'arrowleft') keys.arrowleft = true; if(e.key.toLowerCase() === 'arrowright') keys.arrowright = true; });
+                    document.addEventListener('keyup', (e) => { if(e.key.toLowerCase() === 'arrowleft') keys.arrowleft = false; if(e.key.toLowerCase() === 'arrowright') keys.arrowright = false; });
                 },
                 on_finish: function(data) {
-                    cancelAnimationFrame(this.animFrame);
+                    cancelAnimationFrame(this.anim);
                     data.comparison_length = this.compLen;
                     data.angle = cond.angle;
                     data.wingLength = cond.wingLength;
@@ -99,36 +97,38 @@
             });
         });
 
-        const finalTrial = {
+        // 保存試行
+        timeline.push({
             type: jsPsychHtmlKeyboardResponse,
-            stimulus: "送信中...",
+            stimulus: "保存中...",
             choices: "NO_KEYS",
-            on_start: function() {
+            trial_duration: 1000,
+            on_start: async function() {
+                const results = jsPsych.data.get().filter({trial_type: 'canvas-keyboard-response'}).values();
                 const subId = jsPsych.data.get().values()[0].response.subject_id;
-                const data = jsPsych.data.get().filter({trial_type: 'canvas-keyboard-response'}).values().map(t => ({
-                    subject_id: subId,
-                    timestamp: new Date().toISOString(),
-                    angle: t.angle,
-                    wing_length: t.wingLength,
-                    pse: t.comparison_length,
-                    error: (t.comparison_length - 200).toFixed(1)
+                const uploadData = results.map(t => ({
+                    subject_id: subId, timestamp: new Date().toISOString(), angle: t.angle, wing_length: t.wingLength, standard_len: 200, pse: t.comparison_length, error_amount: (t.comparison_length - 200).toFixed(1)
                 }));
-                fetch('https://script.google.com/macros/s/AKfycbznM5k_dWjr9RcCfMt0YsFkRZXKuFiZV9WcUOoMwaFY0zKGpkygnxV1ceSbwXo_IeC46Q/exec', {
-                    method: 'POST', mode: 'no-cors', cache: 'no-cache', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)
-                }).then(() => { 
-                    let html = `<h2>実験終了</h2><p>ご協力ありがとうございました！以下が今回の結果です。</p>
-                    <div class="table-wrapper"><table class="results-table">
-                    <tr><th>試行</th><th>角度</th><th>矢羽長</th><th>調整結果(px)</th><th>誤差(px)</th></tr>`;
-                    data.forEach((d, i) => {
-                        html += `<tr><td>${i+1}</td><td>${d.angle}°</td><td>${d.wing_length}</td><td>${d.pse.toFixed(1)}</td><td>${d.error}</td></tr>`;
-                    });
-                    html += '</table></div>';
-                    const content = document.querySelector('.jspsych-content');
-                    if(content) content.innerHTML = html; 
-                });
+                try {
+                    await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(uploadData) });
+                } catch(e) { console.error(e); }
             }
-        };
-        timeline.push(finalTrial);
+        });
+
+        // 謝辞と結果表示の試行
+        timeline.push({
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function() {
+                const results = jsPsych.data.get().filter({trial_type: 'canvas-keyboard-response'}).values();
+                let tableHtml = '<table class="result-table"><tr><th>角度</th><th>PSE</th><th>誤差</th></tr>';
+                results.forEach(t => { tableHtml += `<tr><td>${t.angle}°</td><td>${t.comparison_length.toFixed(0)}</td><td>${(t.comparison_length - 200).toFixed(0)}</td></tr>`; });
+                tableHtml += '</table>';
+                return `<div class="cute-msg">🌸 ありがとう！実験がんばったね！ 🌸</div><p>以下の結果が記録されました：</p>${tableHtml}<p>ご協力ありがとうございました！</p>`;
+            },
+            choices: [' '],
+            prompt: "何かキーを押すと終了します"
+        });
+
         jsPsych.run(timeline);
     </script>
 </body>

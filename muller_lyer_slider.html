@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ミュラー・リヤー錯視実験</title>
+    <script src="https://unpkg.com/jspsych@7.3.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-canvas-slider-response@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.2"></script>
+    <link href="https://unpkg.com/jspsych@7.3.3/css/jspsych.css" rel="stylesheet" type="text/css">
+    <style>
+        body { 
+            display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; 
+            background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%); font-family: 'Helvetica Neue', sans-serif;
+        }
+        .jspsych-content { 
+            max-width: 600px; padding: 40px; background: rgba(255, 255, 255, 0.85); 
+            border-radius: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; 
+        }
+        h1 { color: #8d7a70; font-size: 1.8rem; }
+        button { 
+            background-color: #f7a8b8 !important; border: none !important; border-radius: 20px !important;
+            padding: 10px 25px !important; color: white !important; font-weight: bold !important;
+        }
+        input[type=range] { accent-color: #f7a8b8; }
+    </style>
+</head>
+<body>
+    <script>
+        const jsPsych = initJsPsych();
+
+        const angles = [15, 75];
+        const wingLengths = [20, 50];
+        let trials = [];
+        for (let angle of angles) {
+            for (let length of wingLengths) {
+                for (let i = 0; i < 3; i++) trials.push({ angle, length });
+            }
+        }
+        trials = jsPsych.randomization.shuffle(trials);
+
+        const draw = (c, trial, sliderVal) => {
+            if (!c) return;
+            const ctx = c.getContext('2d');
+            ctx.clearRect(0, 0, c.width, c.height);
+            ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.strokeStyle = '#6b5e54';
+            const midY = c.height / 2; const centerX = c.width / 2;
+            const rad = (trial.angle * Math.PI) / 180;
+
+            // 標準刺激 (上)
+            ctx.beginPath();
+            ctx.moveTo(centerX - 100, midY - 100); ctx.lineTo(centerX + 100, midY - 100);
+            ctx.moveTo(centerX - 100, midY - 100); ctx.lineTo(centerX - 100 + trial.length * Math.cos(rad), midY - 100 - trial.length * Math.sin(rad));
+            ctx.moveTo(centerX - 100, midY - 100); ctx.lineTo(centerX - 100 + trial.length * Math.cos(rad), midY - 100 + trial.length * Math.sin(rad));
+            ctx.moveTo(centerX + 100, midY - 100); ctx.lineTo(centerX + 100 - trial.length * Math.cos(rad), midY - 100 - trial.length * Math.sin(rad));
+            ctx.moveTo(centerX + 100, midY - 100); ctx.lineTo(centerX + 100 - trial.length * Math.cos(rad), midY - 100 + trial.length * Math.sin(rad));
+            ctx.stroke();
+
+            // 比較刺激 (下・可変)
+            ctx.beginPath();
+            ctx.moveTo(centerX - sliderVal/2, midY + 100); ctx.lineTo(centerX + sliderVal/2, midY + 100);
+            ctx.moveTo(centerX - sliderVal/2, midY + 100); ctx.lineTo(centerX - sliderVal/2 - trial.length * Math.cos(rad), midY + 100 - trial.length * Math.sin(rad));
+            ctx.moveTo(centerX - sliderVal/2, midY + 100); ctx.lineTo(centerX - sliderVal/2 - trial.length * Math.cos(rad), midY + 100 + trial.length * Math.sin(rad));
+            ctx.moveTo(centerX + sliderVal/2, midY + 100); ctx.lineTo(centerX + sliderVal/2 + trial.length * Math.cos(rad), midY + 100 - trial.length * Math.sin(rad));
+            ctx.moveTo(centerX + sliderVal/2, midY + 100); ctx.lineTo(centerX + sliderVal/2 + trial.length * Math.cos(rad), midY + 100 + trial.length * Math.sin(rad));
+            ctx.stroke();
+        };
+
+        const timeline = [];
+
+        timeline.push({
+            type: jsPsychSurveyText,
+            questions: [{ prompt: "参加者IDを入力してください", name: "subject_id", required: true }]
+        });
+
+        timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: "<h1>✨ 錯視の実験へようこそ ✨</h1><p>準備ができたら何かキーを押してスタート！</p>" });
+
+        trials.forEach((trialData, index) => {
+            const initialVal = Math.floor(Math.random() * 201) + 100;
+            timeline.push({
+                type: jsPsychCanvasSliderResponse,
+                prompt: `<p>試行 ${index + 1} / 12</p>`,
+                canvas_size: [400, 600],
+                slider_start: initialVal,
+                min: 50, max: 350,
+                stimulus: (c) => draw(c, trialData, initialVal),
+                on_load: () => {
+                    const slider = document.querySelector('input[type=range]');
+                    const canvas = document.querySelector('canvas');
+                    slider.addEventListener('input', (e) => draw(canvas, trialData, parseInt(e.target.value)));
+                },
+                data: { angle: trialData.angle, wing_length: trialData.length },
+                response_ends_trial: true,
+                button_label: '次へ'
+            });
+        });
+
+        timeline.push({
+            type: jsPsychHtmlButtonResponse,
+            stimulus: "<h1>実験終了</h1><p>結果を送信しています...</p>",
+            choices: [],
+            on_start: async (trial) => {
+                const sub_id = jsPsych.data.get().filter({trial_type: 'survey-text'}).values()[0].response.subject_id;
+                const results = jsPsych.data.get().filter({trial_type: 'canvas-slider-response'}).values().map(r => ({
+                    subject_id: sub_id,
+                    timestamp: new Date().toISOString(),
+                    angle: r.angle,
+                    wing_length: r.wing_length,
+                    pse: r.response,
+                    error_amount: r.response - 200
+                }));
+
+                const promises = results.map(row => {
+                    const formData = new FormData();
+                    for (let key in row) formData.append(key, row[key]);
+                    return fetch("https://script.google.com/macros/s/AKfycbwsAkUDQuUT-YEAX36gsRhIh6xNa__PWNO344NLPFBTT_rIm2Q3UjbirkPhvfwwBHU/exec", {
+                        method: 'POST',
+                        body: formData
+                    });
+                });
+
+                try {
+                    await Promise.all(promises);
+                    document.querySelector('.jspsych-content').innerHTML = "<h1>💌 送信完了！</h1><p>ご協力ありがとうございました！</p>";
+                } catch (e) {
+                    document.querySelector('.jspsych-content').innerHTML = `<h1>⚠️ 送信失敗</h1><p>もう一度確認してね: ${e.message}</p>`;
+                }
+            }
+        });
+
+        jsPsych.run(timeline);
+    </script>
+</body>
+</html>

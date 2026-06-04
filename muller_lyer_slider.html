@@ -75,7 +75,12 @@
             questions: [{ prompt: "参加者IDを入力してください", name: "subject_id", required: true }]
         });
 
-        timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: "<h1>✨ 錯視の実験へようこそ ✨</h1><p>準備ができたら何かキーを押してスタート！</p>" });
+        // キーボード入力待ちをボタン（タップ）入力待ちに変更
+        timeline.push({ 
+            type: jsPsychHtmlButtonResponse, 
+            stimulus: "<h1>✨ 錯視の実験へようこそ ✨</h1><p>準備ができたら下のボタンをタップしてスタート！</p>",
+            choices: ['実験開始']
+        });
 
         trials.forEach((trialData, index) => {
             const initialVal = Math.floor(Math.random() * 201) + 100;

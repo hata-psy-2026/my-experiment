@@ -6,19 +6,22 @@
     <title>尚絅学院大学 畑澤の心理学実験室</title>
     <style>
         :root {
-            --bg-color: #fcfbf9;
+            --bg-color: #f0f7f4;
             --card-bg: #ffffff;
-            --accent-color: #a3b18a;
-            --text-color: #5a554a;
-            --sub-color: #8c8c73;
+            --accent-color: #b5c99a;
+            --text-color: #7a8b73;
+            --sub-color: #a3b18a;
+            --soft-pink: #f8e1e7;
         }
 
         body {
             margin: 0;
             padding: 0;
             background-color: var(--bg-color);
+            background-image: radial-gradient(#cce3de 0.8px, transparent 0.8px);
+            background-size: 25px 25px;
             color: var(--text-color);
-            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -33,25 +36,42 @@
         }
 
         h1 {
-            font-size: 1.5rem;
             margin-bottom: 20px;
-            border-bottom: 2px solid var(--accent-color);
-            padding-bottom: 10px;
+            color: #6a7a62;
+            padding: 15px 30px;
+            background: #ffffff;
+            border-radius: 50px;
+            box-shadow: 0 4px 10px rgba(181, 201, 154, 0.3);
             display: inline-block;
-            letter-spacing: 0.05em;
+            line-height: 1.4;
+        }
+
+        .h1-top {
+            font-size: 0.6em;
+            color: #8fa07e;
+            display: block;
+            letter-spacing: 0.1em;
+        }
+
+        .h1-bottom {
+            font-size: 1.2em;
+            display: block;
         }
 
         .greeting {
             max-width: 600px;
             margin: 0 auto 40px;
             line-height: 1.6;
-            color: var(--sub-color);
+            background: rgba(255, 255, 255, 0.6);
+            padding: 20px;
+            border-radius: 20px;
+            color: #7a8b73;
         }
 
         .container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
+            gap: 25px;
             width: 90%;
             max-width: 900px;
             margin-bottom: 60px;
@@ -60,79 +80,87 @@
         .card {
             background: var(--card-bg);
             padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            transition: transform 0.3s, box-shadow 0.3s;
+            border-radius: 35px;
+            border: 2px solid #e9f5e9;
+            box-shadow: 0 8px 20px rgba(181, 201, 154, 0.2);
+            transition: transform 0.3s ease;
             display: flex;
             flex-direction: column;
         }
 
         .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            transform: scale(1.03);
         }
 
         .card h2 {
             margin-top: 0;
-            color: var(--accent-color);
-            font-size: 1.4rem;
+            color: #8fa07e;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .card p {
             flex-grow: 1;
-            line-height: 1.5;
-            color: var(--sub-color);
-            margin-bottom: 20px;
+            line-height: 1.6;
+            color: #9ca995;
+            margin-bottom: 25px;
         }
 
         .btn {
             display: inline-block;
-            padding: 12px 24px;
+            padding: 14px 28px;
             background-color: var(--accent-color);
             color: white;
             text-decoration: none;
-            border-radius: 30px;
+            border-radius: 50px;
             text-align: center;
             font-weight: bold;
-            transition: background 0.2s;
+            box-shadow: 0 4px 6px rgba(181, 201, 154, 0.4);
+            transition: all 0.3s;
         }
 
         .btn:hover {
-            background-color: #8a9a6e;
+            background-color: #92a875;
+            transform: translateY(-2px);
         }
 
         @media (max-width: 600px) {
-            h1 { font-size: 1.2rem; }
+            h1 { font-size: 1.1rem; }
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>尚絅学院大学 畑澤の心理学実験室</h1>
-        <p class="greeting">ご訪問ありがとうございます。以下の実験へのご協力をお願いいたします。各実験は数分で終わります。スマートフォンからも参加可能です。</p>
+        <h1>
+            <span class="h1-top">尚絅学院大学</span>
+            <span class="h1-bottom">Hatasawa Psychology Lab</span>
+        </h1>
+        <p class="greeting">こんにちは！遊びに来てくれてありがとうございます。<br>心理学ってどんなものかな？と興味をもったら、ぜひ実験を体験してみてくださいね。<br>スマートフォンからでも簡単にできますよ！</p>
     </header>
 
     <div class="container">
         <!-- 実験0 -->
         <div class="card">
-            <h2>実験0：はじめてのWebページ</h2>
-            <p>第2回で作成した記念すべき「Hello World」のページです。</p>
-            <a href="hello_world.html" class="btn">Hello Worldを見る</a>
+            <h2>✨ 実験0：はじめの一歩</h2>
+            <p>第2回でつくった「Hello World」ページです。まずはここから見てみてね！</p>
+            <a href="hello_world.html" class="btn">ページを見る</a>
         </div>
 
         <!-- 実験1 -->
         <div class="card">
-            <h2>実験1：ストループ課題</h2>
-            <p>「文字の意味」と「文字の色」の干渉を調べる、簡単なキーボード入力のテストです。（所要時間：約3分）</p>
-            <a href="stroop.html" class="btn">実験1に参加する</a>
+            <h2>🧠 実験1：ストループ課題</h2>
+            <p>文字の色と意味のふしぎな関係を調べるテストです。（3分くらいで終わるよ）</p>
+            <a href="stroop.html" class="btn">あそんでみる</a>
         </div>
 
         <!-- 実験2 -->
         <div class="card">
-            <h2>実験2：ミュラー・リヤー錯視</h2>
-            <p>図形の長さが違って見える錯覚を測る、スライダーを使った視覚のテストです。（所要時間：約2分）</p>
-            <a href="muller_lyer_final.html" class="btn">実験2に参加する</a>
+            <h2>👁️ 実験2：ミュラー・リヤー錯視</h2>
+            <p>図形の長さがちがって見える！？不思議な錯覚を体験してみてね。（2分くらいで終わるよ）</p>
+            <a href="muller_lyer_final.html" class="btn">あそんでみる</a>
         </div>
     </div>
 

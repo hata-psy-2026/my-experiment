@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>錯視の実験</title>
+    <script src="https://unpkg.com/jspsych@7.3.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-canvas-slider-response@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.2"></script>
+    <link href="https://unpkg.com/jspsych@7.3.3/css/jspsych.css" rel="stylesheet" type="text/css">
+    <style>
+        body { margin: 0; background-color: #fcfbf9; font-family: 'Helvetica Neue', Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .jspsych-content { width: 90%; max-width: 500px; background: #ffffff; padding: 40px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); text-align: center; }
+        
+        #jspsych-canvas-slider-response-stimulus {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100%;
+        }
+        
+        canvas { max-width: 100%; height: auto; display: block; margin: 20px auto; }
+        
+        /* スライダーを右側に約1cm調整 */
+        input[type=range] { 
+            width: 75% !important; 
+            max-width: 320px !important; 
+            margin: 20px auto 20px 15% !important; 
+            accent-color: #d4a373; 
+            display: block !important; 
+            cursor: pointer; 
+        }
+        
+        .jspsych-btn { background: #d4a373 !important; border: none !important; border-radius: 24px !important; color: white !important; padding: 12px 40px !important; font-weight: 600 !important; font-size: 1rem !important; transition: transform 0.2s; }
+        .jspsych-btn:hover { transform: scale(1.05); }
+        .instruction-text { color: #5a554a; font-size: 1.1rem; margin-bottom: 20px; line-height: 1.5; }
+        .trial-counter { color: #8c8c73; font-size: 0.95rem; margin-bottom: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <script>
+        const jsPsych = initJsPsych();
+
+        const angles = [15, 75];
+        const wingLengths = [20, 50];
+        let trials = [];
+        for (let angle of angles) {
+            for (let length of wingLengths) {
+                for (let i = 0; i < 3; i++) trials.push({ angle, length });
+            }
+        }
+        trials = jsPsych.randomization.shuffle(trials);
+
+        const draw = (c, trial, sliderVal) => {
+            const ctx = c.getContext('2d');
+            ctx.clearRect(0, 0, c.width, c.height);
+            ctx.lineWidth = 3; 
+            ctx.lineCap = 'round'; 
+            ctx.strokeStyle = '#5a554a';
+            
+            const cx = c.width / 2;
+            const rad = (trial.angle * Math.PI) / 180;
+            const lineFixed = 100;
+
+            // 1. 上部：標準線 (固定)
+            ctx.beginPath();
+            ctx.moveTo(cx - lineFixed, 120); ctx.lineTo(cx + lineFixed, 120);
+            ctx.moveTo(cx - lineFixed, 120); ctx.lineTo(cx - lineFixed + trial.length * Math.cos(rad), 120 - trial.length * Math.sin(rad));
+            ctx.moveTo(cx - lineFixed, 120); ctx.lineTo(cx - lineFixed + trial.length * Math.cos(rad), 120 + trial.length * Math.sin(rad));
+            ctx.moveTo(cx + lineFixed, 120); ctx.lineTo(cx + lineFixed - trial.length * Math.cos(rad), 120 - trial.length * Math.sin(rad));
+            ctx.moveTo(cx + lineFixed, 120); ctx.lineTo(cx + lineFixed - trial.length * Math.cos(rad), 120 + trial.length * Math.sin(rad));
+            ctx.stroke();
+
+            // 2. 下部：比較線 (可変)
+            const halfVal = sliderVal / 2;
+            ctx.beginPath();
+            ctx.moveTo(cx - halfVal, 280); ctx.lineTo(cx + halfVal, 280);
+            ctx.moveTo(cx - halfVal, 280); ctx.lineTo(cx - halfVal - trial.length * Math.cos(rad), 280 - trial.length * Math.sin(rad));
+            ctx.moveTo(cx - halfVal, 280); ctx.lineTo(cx - halfVal - trial.length * Math.cos(rad), 280 + trial.length * Math.sin(rad));
+            ctx.moveTo(cx + halfVal, 280); ctx.lineTo(cx + halfVal + trial.length * Math.cos(rad), 280 - trial.length * Math.sin(rad));
+            ctx.moveTo(cx + halfVal, 280); ctx.lineTo(cx + halfVal + trial.length * Math.cos(rad), 280 + trial.length * Math.sin(rad));
+            ctx.stroke();
+        };
+
+        const timeline = [];
+        
+        timeline.push({
+            type: jsPsychSurveyText,
+            questions: [{ prompt: "参加者IDを入力してください", name: "subject_id", required: true }]
+        });
+
+        timeline.push({
+            type: jsPsychHtmlButtonResponse,
+            stimulus: "<h2>視覚テストへようこそ</h2><p class='instruction-text'>これから、目の錯覚に関する短いテストを行います。<br>画面に表示される2本の線の長さを比べるテストです。</p>",
+            choices: ['次へ']
+        });
+
+        timeline.push({
+            type: jsPsychHtmlButtonResponse,
+            stimulus: "<h2>操作の説明</h2><p class='instruction-text'>下の線の長さは、スライダーを動かすと変えることができます。<br>上の線と下の線が「全く同じ長さ」に見えるように、スライダーを調整してください。<br><br>ぴったりだと思ったら「決定」ボタンを押してください。</p>",
+            choices: ['実験を始める']
+        });
+        
+        trials.forEach((trialData, index) => {
+            const initialVal = 200;
+            timeline.push({
+                type: jsPsychCanvasSliderResponse,
+                prompt: `
+                    <div class="trial-counter">現在 ${index + 1} 回目 / 全 12 回</div>
+                    <p class='instruction-text'>下の線の長さを、上の線と同じに見えるように調整してください。</p>
+                `,
+                canvas_size: [400, 600],
+                slider_start: initialVal,
+                min: 50, max: 350,
+                stimulus: (c) => draw(c, trialData, initialVal),
+                on_load: () => {
+                    const slider = document.querySelector('input[type=range]');
+                    const canvas = document.querySelector('canvas');
+                    slider.addEventListener('input', (e) => draw(canvas, trialData, parseInt(e.target.value)));
+                },
+                button_label: '決定'
+            });
+        });
+
+        timeline.push({
+            type: jsPsychHtmlButtonResponse,
+            stimulus: "<h2>実験終了</h2><p class='instruction-text'>すべての課題が終了しました。<br>ご協力ありがとうございました！</p>",
+            choices: ['閉じる']
+        });
+
+        jsPsych.run(timeline);
+    </script>
+</body>
+</html>

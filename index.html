@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>尚絅学院大学 畑澤の心理学実験室</title>
+    <style>
+        :root {
+            --bg-color: #fcfbf9;
+            --card-bg: #ffffff;
+            --accent-color: #a3b18a;
+            --text-color: #5a554a;
+            --sub-color: #8c8c73;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            width: 90%;
+            max-width: 800px;
+            padding: 60px 20px 40px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+            display: inline-block;
+            letter-spacing: 0.05em;
+        }
+
+        .greeting {
+            max-width: 600px;
+            margin: 0 auto 40px;
+            line-height: 1.6;
+            color: var(--sub-color);
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            width: 90%;
+            max-width: 900px;
+            margin-bottom: 60px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            color: var(--accent-color);
+            font-size: 1.4rem;
+        }
+
+        .card p {
+            flex-grow: 1;
+            line-height: 1.5;
+            color: var(--sub-color);
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: var(--accent-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            text-align: center;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #8a9a6e;
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>尚絅学院大学 畑澤の心理学実験室</h1>
+        <p class="greeting">ご訪問ありがとうございます。以下の実験へのご協力をお願いいたします。各実験は数分で終わります。スマートフォンからも参加可能です。</p>
+    </header>
+
+    <div class="container">
+        <!-- 実験0 -->
+        <div class="card">
+            <h2>実験0：はじめてのWebページ</h2>
+            <p>第2回で作成した記念すべき「Hello World」のページです。</p>
+            <a href="hello_world.html" class="btn">Hello Worldを見る</a>
+        </div>
+
+        <!-- 実験1 -->
+        <div class="card">
+            <h2>実験1：ストループ課題</h2>
+            <p>「文字の意味」と「文字の色」の干渉を調べる、簡単なキーボード入力のテストです。（所要時間：約3分）</p>
+            <a href="stroop.html" class="btn">実験1に参加する</a>
+        </div>
+
+        <!-- 実験2 -->
+        <div class="card">
+            <h2>実験2：ミュラー・リヤー錯視</h2>
+            <p>図形の長さが違って見える錯覚を測る、スライダーを使った視覚のテストです。（所要時間：約2分）</p>
+            <a href="muller_lyer_final.html" class="btn">実験2に参加する</a>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -6,163 +6,462 @@
     <title>尚絅学院大学 畑澤の心理学実験室</title>
     <style>
         :root {
-            --bg-color: #f0f7f4;
-            --card-bg: #ffffff;
-            --accent-color: #b5c99a;
-            --text-color: #7a8b73;
-            --sub-color: #a3b18a;
-            --soft-pink: #f8e1e7;
+            /* シャボン玉・オーロラをイメージしたカラーパレット */
+            --bg-gradient-start: #e0f2fe; /* 淡い水色 */
+            --bg-gradient-end: #fae8ff;   /* 淡いピンクパープル */
+            --card-bg: rgba(255, 255, 255, 0.45); /* 透明感のあるガラス */
+            --card-border: rgba(255, 255, 255, 0.6);
+            --text-color: #4b5d67;
+            --text-sub: #697c89;
+            
+            /* シャボン玉の虹色（干渉色）を模したグラデーション */
+            --bubble-rainbow: linear-gradient(135deg, #a5f3fc 0%, #fbcfe8 50%, #fef08a 100%);
+            --btn-main-grad: linear-gradient(135deg, #a5f3fc 0%, #c084fc 100%);
+            --btn-main-hover: linear-gradient(135deg, #bae6fd 0%, #d8b4fe 100%);
+            
+            --prereg-border: #c084fc;
+            --history-bg: rgba(255, 255, 255, 0.6);
+            --history-text: #7c3aed;
         }
 
         body {
             margin: 0;
             padding: 0;
-            background-color: var(--bg-color);
-            background-image: radial-gradient(#cce3de 0.8px, transparent 0.8px);
-            background-size: 25px 25px;
+            min-height: 100vh;
             color: var(--text-color);
-            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-family: "Quicksand", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            /* 背景のパステルグラデーション */
+            background: linear-gradient(180deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+        }
+
+        /* 背景でシャボン玉を描画するCanvas */
+        #bubble-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none; /* 下の要素のクリックを邪魔しない */
+        }
+
+        /* コンテンツ全体を包むラッパー（Canvasの上に重ねる） */
+        .content-wrapper {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         header {
             width: 90%;
             max-width: 800px;
-            padding: 60px 20px 40px;
+            padding: 80px 20px 40px;
             text-align: center;
         }
 
         h1 {
-            margin-bottom: 20px;
-            color: #6a7a62;
-            padding: 15px 30px;
-            background: #ffffff;
+            margin-bottom: 25px;
+            padding: 18px 40px;
+            /* ガラスモーフィズム */
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 2px solid var(--card-border);
             border-radius: 50px;
-            box-shadow: 0 4px 10px rgba(181, 201, 154, 0.3);
+            box-shadow: 0 10px 30px rgba(192, 132, 252, 0.15);
             display: inline-block;
             line-height: 1.4;
+            animation: floatHeader 6s ease-in-out infinite;
+        }
+
+        /* ふわふわ浮かぶヘッダーのアニメーション */
+        @keyframes floatHeader {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(-1deg); }
         }
 
         .h1-top {
-            font-size: 0.6em;
-            color: #8fa07e;
+            font-size: 0.65em;
+            color: #7c3aed;
             display: block;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.15em;
+            font-weight: 800;
         }
 
         .h1-bottom {
-            font-size: 1.2em;
+            font-size: 1.3em;
             display: block;
+            background: linear-gradient(45deg, #7c3aed, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
         }
 
         .greeting {
-            max-width: 600px;
+            max-width: 620px;
             margin: 0 auto 40px;
-            line-height: 1.6;
-            background: rgba(255, 255, 255, 0.6);
-            padding: 20px;
-            border-radius: 20px;
-            color: #7a8b73;
+            line-height: 1.8;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            padding: 25px 30px;
+            border-radius: 24px;
+            color: var(--text-color);
+            font-size: 0.95rem;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.05);
+        }
+
+        /* スマートフォン案内用のスタイル（一段落下げて優しく表示） */
+        .greeting-sub {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: var(--text-sub);
+            font-weight: 500;
         }
 
         .container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
             width: 90%;
-            max-width: 900px;
-            margin-bottom: 60px;
+            max-width: 1000px;
+            margin-bottom: 80px;
         }
 
+        /* 実験カードのガラスデザイン化 */
         .card {
             background: var(--card-bg);
-            padding: 30px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 35px;
             border-radius: 35px;
-            border: 2px solid #e9f5e9;
-            box-shadow: 0 8px 20px rgba(181, 201, 154, 0.2);
-            transition: transform 0.3s ease;
+            border: 2px solid var(--card-border);
+            box-shadow: 0 8px 32px rgba(192, 132, 252, 0.1);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             display: flex;
             flex-direction: column;
+            position: relative;
+            overflow: hidden;
         }
 
+        /* シャボン玉のようなうっすらとした虹色のハイライトをカード上部に追加 */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: var(--bubble-rainbow);
+            opacity: 0.8;
+        }
+
+        /* ぷるんとしたホバーエフェクト */
         .card:hover {
-            transform: scale(1.03);
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(192, 132, 252, 0.2);
+            border-color: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.55);
         }
 
         .card h2 {
             margin-top: 0;
-            color: #8fa07e;
-            font-size: 1.3rem;
+            color: #6d28d9;
+            font-size: 1.35rem;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
         .card p {
             flex-grow: 1;
-            line-height: 1.6;
-            color: #9ca995;
-            margin-bottom: 25px;
+            line-height: 1.7;
+            color: var(--text-sub);
+            margin-bottom: 30px;
+            font-size: 0.95rem;
         }
 
+        /* ボタングループ */
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+        }
+
+        /* 共通ボタン（丸みを帯びて、影も柔らかく） */
         .btn {
-            display: inline-block;
-            padding: 14px 28px;
-            background-color: var(--accent-color);
-            color: white;
+            display: block;
+            padding: 14px 24px;
             text-decoration: none;
             border-radius: 50px;
             text-align: center;
             font-weight: bold;
-            box-shadow: 0 4px 6px rgba(181, 201, 154, 0.4);
-            transition: all 0.3s;
+            font-size: 0.95rem;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-sizing: border-box;
+            cursor: pointer;
         }
 
-        .btn:hover {
-            background-color: #92a875;
+        /* 1. シャボン玉の虹色をグラデーションにしたメインボタン */
+        .btn-main {
+            background: var(--btn-main-grad);
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(192, 132, 252, 0.4);
+            border: none;
+        }
+
+        .btn-main:hover {
+            background: var(--btn-main-hover);
             transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(192, 132, 252, 0.6);
+        }
+
+        /* 2. プレレジ用の透明感あるボタン */
+        .btn-outline {
+            background-color: rgba(255, 255, 255, 0.4);
+            color: #7c3aed;
+            border: 2px solid var(--prereg-border);
+            backdrop-filter: blur(4px);
+        }
+
+        .btn-outline:hover {
+            background-color: rgba(192, 132, 252, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(192, 132, 252, 0.15);
+        }
+
+        /* 3. 変更履歴用の優しく丸いサブボタン */
+        .btn-sub {
+            background-color: var(--history-bg);
+            color: var(--history-text);
+            font-size: 0.8rem;
+            padding: 10px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .btn-sub:hover {
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #6d28d9;
+            transform: translateY(-1px);
         }
 
         @media (max-width: 600px) {
-            h1 { font-size: 1.1rem; }
+            h1 { font-size: 1.1rem; padding: 12px 25px; }
+            .container { gap: 20px; }
+            .card { padding: 25px; }
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>
-            <span class="h1-top">尚絅学院大学</span>
-            <span class="h1-bottom">Hatasawa Psychology Lab</span>
-        </h1>
-        <p class="greeting">こんにちは！遊びに来てくれてありがとうございます。<br>心理学ってどんなものかな？と興味をもったら、ぜひ実験を体験してみてくださいね。<br>スマートフォンからでも簡単にできますよ！</p>
-    </header>
+    <!-- シャボン玉背景を描画するキャンバス -->
+    <canvas id="bubble-canvas"></canvas>
 
-    <div class="container">
-        <!-- 実験0 -->
-        <div class="card">
-            <h2>✨ 実験0：はじめの一歩</h2>
-            <p>第2回でつくった「Hello World」ページです。まずはここから見てみてね！</p>
-            <a href="hello_world.html" class="btn">ページを見る</a>
-        </div>
+    <div class="content-wrapper">
+        <header>
+            <h1>
+                <span class="h1-top">尚絅学院大学</span>
+                <span class="h1-bottom">Hatasawa Psychology Lab</span>
+            </h1>
+            <!-- 挨拶文を改行し、スマートフォン案内用のスパンを追加して一段落下げました -->
+            <p class="greeting">
+                こんにちは！遊びに来てくれてありがとうございます。心理学ってどんなものかな？と興味をもったら、ぜひ実験を体験してみてくださいね。
+                <span class="greeting-sub">📱 スマートフォンからでも簡単にできますよ！</span>
+            </p>
+        </header>
 
-        <!-- 実験1 -->
-        <div class="card">
-            <h2>🧠 実験1：ストループ課題</h2>
-            <p>文字の色と意味のふしぎな関係を調べるテストです。（3分くらいで終わるよ）</p>
-            <a href="stroop.html" class="btn">あそんでみる</a>
-        </div>
+        <div class="container">
+            <!-- 実験0 -->
+            <div class="card">
+                <h2>✨ 実験0：はじめの一歩</h2>
+                <p>第2回でつくった「Hello World」ページです。まずはここから見てみてね！</p>
+                <div class="btn-group">
+                    <a href="hello_world.html" class="btn btn-main">ページを見る</a>
+                </div>
+            </div>
 
-        <!-- 実験2 -->
-        <div class="card">
-            <h2>👁️ 実験2：ミュラー・リヤー錯視</h2>
-            <p>図形の長さがちがって見える！？不思議な錯覚を体験してみてね。（2分くらいで終わるよ）</p>
-            <a href="muller_lyer_final.html" class="btn">あそんでみる</a>
+            <!-- 実験1：本番用（ストループ課題 ＋ プレレジストレーション関連 of ボタン配置） -->
+            <div class="card">
+                <h2>🧠 実験1：ストループ課題</h2>
+                <p>文字の色と意味のふしぎな関係を調べるテストです。研究の科学的な透明性を確保するため、実験前に内容を事前登録（プレレジストレーション）しています。（3分くらいで終わるよ）</p>
+                
+                <div class="btn-group">
+                    <!-- 実験開始ボタン（メイン） -->
+                    <a href="stroop.html" class="btn btn-main">あそんでみる（実験に参加）</a>
+                    
+                    <!-- プレレジ本文へのリンクボタン（白抜き枠線） -->
+                    <a href="https://github.com/hata-psy-2026/my-experiment/blob/main/preregistration.md" target="_blank" rel="noopener noreferrer" class="btn btn-outline">
+                        📝 プレレジを確認する
+                    </a>
+                    
+                    <!-- 変更履歴へのリンクボタン（控えめなサブボタン） -->
+                    <a href="https://github.com/hata-psy-2026/my-experiment/commits/main/preregistration.md" target="_blank" rel="noopener noreferrer" class="btn btn-sub">
+                        ⏳ 変更履歴（証拠）を確認する
+                    </a>
+                </div>
+            </div>
+
+            <!-- 実験2 -->
+            <div class="card">
+                <h2>👁️ 実験2：ミュラー・リヤー錯視</h2>
+                <p>図形の長さがちがって見える！？不思議な錯覚を体験してみてね。（2分くらいで終わるよ）</p>
+                <div class="btn-group">
+                    <a href="muller_lyer_final.html" class="btn btn-main">あそんでみる</a>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- シャボン玉生成スクリプト -->
+    <script>
+        const canvas = document.getElementById('bubble-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        // リサイズ処理
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
+
+        // シャボン玉（Bubble）クラス定義
+        class Bubble {
+            constructor(x, y, radius, speedX, speedY, colorSeed) {
+                this.x = x;
+                this.y = y;
+                this.radius = radius;
+                this.speedX = speedX;
+                this.speedY = speedY;
+                // シャボン玉の揺らぎ用のパラメータ
+                this.angle = Math.random() * Math.PI * 2;
+                this.wobbleSpeed = 0.01 + Math.random() * 0.02;
+                this.wobbleAmount = 0.5 + Math.random() * 1.5;
+                
+                // 透明度
+                this.alpha = 0.1 + Math.random() * 0.25;
+                // 色相のシード（虹色の輝きを表現するため）
+                this.colorSeed = colorSeed || Math.random() * 360;
+            }
+
+            update() {
+                // 上へ昇る動きに、わずかな横揺れを加える
+                this.angle += this.wobbleSpeed;
+                this.x += this.speedX + Math.sin(this.angle) * this.wobbleAmount;
+                this.y += this.speedY;
+
+                // 画面外（上部）に消えたら、画面下部にリセット
+                if (this.y + this.radius < 0) {
+                    this.y = height + this.radius;
+                    this.x = Math.random() * width;
+                    this.alpha = 0.1 + Math.random() * 0.25;
+                }
+                // 左右の端でバウンス、または緩やかに戻す
+                if (this.x - this.radius < 0 || this.x + this.radius > width) {
+                    this.speedX *= -1;
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+
+                // 泡のグラデーションを作成（反射光とシャボン膜の虹色を表現）
+                // 中心から少しずらした位置から外円に向けてのグラデーション
+                const grad = ctx.createRadialGradient(
+                    this.x - this.radius * 0.3, 
+                    this.y - this.radius * 0.3, 
+                    this.radius * 0.1, 
+                    this.x, 
+                    this.y, 
+                    this.radius
+                );
+
+                // 虹色の光彩を薄く重ねる
+                const hue = this.colorSeed;
+                grad.addColorStop(0, 'rgba(255, 255, 255, 0.9)'); // ハイライト（反射）
+                grad.addColorStop(0.4, `hsla(${(hue + 60) % 360}, 70%, 85%, 0.3)`);
+                grad.addColorStop(0.8, `hsla(${(hue + 180) % 360}, 70%, 80%, 0.4)`);
+                grad.addColorStop(0.95, `hsla(${hue}, 80%, 75%, 0.6)`); // 輪郭部分を少し濃くして球体感を出す
+                grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = grad;
+                ctx.fill();
+
+                // 輪郭に細い白い線を入れ、よりリアルな膜の質感を表現
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                ctx.restore();
+            }
+        }
+
+        // シャボン玉の配列を作成
+        const bubbles = [];
+        const bubbleCount = Math.min(45, Math.floor(width / 25)); // 画面サイズに応じて泡の数を調整
+
+        for (let i = 0; i < bubbleCount; i++) {
+            const radius = 10 + Math.random() * 55; // 大小さまざまなサイズ
+            const x = Math.random() * width;
+            const y = Math.random() * height;
+            const speedX = (Math.random() - 0.5) * 0.4;
+            const speedY = -0.3 - Math.random() * 0.8; // ゆっくり上昇
+            bubbles.push(new Bubble(x, y, radius, speedX, speedY));
+        }
+
+        // マウスインタラクション：マウス周辺から泡を発生させる
+        let mouseActive = false;
+        window.addEventListener('mousemove', (e) => {
+            // 稀に小さな泡をマウスポインタから生成
+            if (Math.random() < 0.12) {
+                const radius = 5 + Math.random() * 15;
+                // マウス位置から少しランダムにずらして生成
+                const x = e.clientX + (Math.random() - 0.5) * 20;
+                const y = e.clientY + (Math.random() - 0.5) * 20;
+                const speedX = (Math.random() - 0.5) * 0.8;
+                const speedY = -0.5 - Math.random() * 1;
+                const newBubble = new Bubble(x, y, radius, speedX, speedY, Math.random() * 360);
+                newBubble.alpha = 0.4; // 生成直後は少しハッキリ見えるように
+                
+                // 古い泡と置き換え、または一時追加して寿命（y軸で徐々に消滅など）を設ける
+                bubbles.push(newBubble);
+                if (bubbles.length > bubbleCount + 15) {
+                    bubbles.shift(); // 最大数を越えたら一番古いものを消す
+                }
+            }
+        });
+
+        // アニメーションループ
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            
+            // 各シャボン玉の描画と更新
+            bubbles.forEach(bubble => {
+                bubble.update();
+                bubble.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
 </body>
 </html>
